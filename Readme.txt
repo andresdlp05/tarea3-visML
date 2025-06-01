@@ -1,5 +1,5 @@
 
-> **Nota:** La carpeta `checkpoints/` **no** está incluida en este repositorio. Los pesos del modelo (`stylegan_tower256.pth`) se deben descargar externamente (https://drive.google.com/drive/folders/15RJ5_Pd0F3O9x0fC3AGa16BH4AXkPmiP?usp=sharing).
+> Nota: La carpeta `checkpoints/` no está incluida en este repositorio. Los pesos del modelo (`stylegan_tower256.pth`) se deben descargar externamente (https://drive.google.com/drive/folders/15RJ5_Pd0F3O9x0fC3AGa16BH4AXkPmiP?usp=sharing).
 
 
 El archivo `stylegan_tower256.pth` contiene los pesos pre‐entrenados de nuestro modelo StyleGAN (torres 256×256). 
