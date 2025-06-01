@@ -1,0 +1,10 @@
+# Ignorar checkpoints de modelos (pesados)
+checkpoints/*.pth
+
+# Ignorar caches y entornos virtuales comunes
+__pycache__/
+*.py[cod]
+env/
+venv/
+*.log
+.DS_Store
