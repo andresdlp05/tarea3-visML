@@ -10,7 +10,7 @@ import torch
 
 from sklearn.cluster import KMeans
 
-from flask import Flask
+from flask import Flask, jsonify, request 
 from flask_cors import CORS
 import math
 
@@ -56,23 +56,22 @@ def add_header(r):
 #
 
 def spectral_clustering(affinity_mat, n_clusters):
-    model = SpectralBiclustering(n_clusters=n_clusters, method='bistochastic', random_state=42)
-    model.fit(affinity_mat.astype(np.float64))
-    return model.row_labels_.astype(int)
+    X = affinity_mat.astype(np.float64)
+    km = KMeans(n_clusters=n_clusters, random_state=42)
+    labels = km.fit_predict(X)
+    return labels.astype(int)
 
 def multiway_spectral_clustering(sim23, sim34, n_clusters):
     S2 = sim23.dot(sim23.T)
-    a2 = spectral_cluster_affinity(S2, n_clusters)
+    a2 = spectral_clustering(S2, n_clusters)
 
-    # 2) Para layer4: S4 = sim34.T @ sim34   
     S4 = sim34.T.dot(sim34)
-    a4 = spectral_cluster_affinity(S4, n_clusters)
+    a4 = spectral_clustering(S4, n_clusters)
 
-    # 3) Para layer3: combinamos sim23^T @ sim23 + sim34 @ sim34^T
     S3a = sim23.T.dot(sim23)    
     S3b = sim34.dot(sim34.T)     
     S3  = S3a + S3b
-    a3  = spectral_cluster_affinity(S3, n_clusters)
+    a3  = spectral_clustering(S3, n_clusters)
 
     return a2, a3, a4
     
@@ -149,10 +148,7 @@ def link_score():
 
 @app.route('/channel_dr', methods=['GET', 'POST'])
 def channel_dr():
-    """
-    Retorna las proyecciones en 2D para cada muestra (UMAP). JSON:
-      { "projections": [[x0,y0], [x1,y1], …] }
-    """
+
     global projections
     if projections is None:
         return "Error: Proyecciones UMAP no disponibles", 500
@@ -161,16 +157,7 @@ def channel_dr():
 
 @app.route('/selected_correlation', methods=['GET', 'POST'])
 def selected_correlation():
-    """
-    Dado un arreglo de índices de instancias seleccionadas (brushed) en el request args:
-      ids = [i1, i2, …]
-    Retorna dos matrices JSON de tamaño K×K:
-    {
-      "cluster_corr23_brushed": [[…] K×K],
-      "cluster_corr34_brushed": [[…] K×K]
-    }
-    Si ids está vacío o no es válido, retorna ceros.
-    """
+
     ids_str = request.args.get('ids', '[]')
     try:
         ids = flask.json.loads(ids_str)

@@ -10,6 +10,8 @@ import torch
 from models import MODEL_ZOO
 from models import build_generator
 
+from umap import UMAP
+
 # if you have CUDA-enabled GPU, set this to True!
 is_cuda = False
 
@@ -32,16 +34,7 @@ if is_cuda:
     generator = generator.cuda()
 generator.eval()
 
-'''
-This draws a sample from the StyleGAN generator.
-First we sample a random latent code.
-Then we feed this through a generator neural network, producing a 3-channel RGB image, as well as activations at early layers.
-In particular:
-* `act2` are activations at layer 2 (0-indexing used here), giving us an 512x8x8 tensor of activations, e.g. 512 channels, 8x8 spatial resolution
-* `act3` are activations at layer 3, giving us another 512x8x8 tensor of activations.
-* `act3_up` is the result of bilinear upsampling of `act3` to a 512x16x16 tensor.
-* `act4` are activations at layer 4, giving us a 512x16x16 tensor of activations.
-'''
+
 def sample_generator():
     code = torch.randn(1,generator.z_space_dim)
     if is_cuda:
@@ -60,18 +53,13 @@ def sample_generator():
     #
 
     return act2,act3,act3_up,act4,image
-#
 
-'''
-Postprocess images from the generator network - suitable to write to disk via PIL.
-'''
 def postprocess(images):
     scaled_images = (images+1)/2
     np_images = 255*scaled_images.numpy()
     np_images = np.clip(np_images + 0.5, 0, 255).astype(np.uint8)
     np_images = np_images.transpose(0, 2, 3, 1)
     return np_images
-#
 
 
 def iou(mask_a: np.ndarray, mask_b: np.ndarray) -> np.ndarray:
@@ -149,7 +137,7 @@ if __name__ == '__main__':
  
     print("[2] Calculando max‐pooling sobre act4 y ejecutando UMAP…")
     features = all_act4.max(axis=2).max(axis=2)  
-    reducer = umap.UMAP(n_components=2, random_state=42)
+    reducer = UMAP(n_components=2, random_state=42)
     projections = reducer.fit_transform(features)  
     np.save(UMAP_OUTFILE, projections)
     print(f"  → Proyecciones UMAP guardadas en '{UMAP_OUTFILE}'")
